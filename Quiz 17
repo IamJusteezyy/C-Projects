@@ -1,0 +1,203 @@
+//main.cpp
+#include <iostream>
+#include <fstream>
+#include "inventoryRecords.h"
+using namespace std;
+
+
+int main()
+{
+	int choice;
+	cout << "What would you like to do with your records?" << endl;
+	cout << "1) Display all records" << endl;
+	cout << "2) Overwrite an existing record" << endl;
+	cout << "3) Calculate the total value of your inventory" << endl;
+	cout << "4) Add a new record" << endl;
+	cout << "5) Enter -1 to quit" << endl;
+	
+	do {
+		cin >> choice;
+
+		inventoryRecords ir;
+
+		switch (choice) {
+		case 1: ir.DisplayRecords();
+			cout << "What would you like to do next?" << endl;
+			break;
+		case 2: ir.ReadWrite();
+			cout << "What would you like to do next?" << endl;
+			break;
+		case 3: ir.TotalValue();
+			cout << "What would you like to do next?" << endl;
+			break;
+		case 4: ir.NewRecord();
+			cout << "What would you like to do next?" << endl;
+			break;
+		}
+	} while (choice != -1);
+	cin.get();
+	cin.get();
+    return 0;
+}
+
+//inventoryRecords.h
+#ifndef INVENTORYRECORDS_H
+#define INVENTORYRECORDS_H
+
+class inventoryRecords
+{
+private:
+	int numFiles;
+public:
+	inventoryRecords();
+	void DisplayRecords();
+	void ReadWrite();
+	void TotalValue();
+	void NewRecord();
+};
+#endif
+//inventoryRecords.cpp-implementation file
+
+#include <iostream>
+#include <iomanip>
+#include <fstream>
+#include "inventoryRecords.h"
+using namespace std;
+
+struct Invtry {
+	char desc[31];
+	int qty;
+	double price;
+};
+
+inventoryRecords::inventoryRecords()
+{
+	fstream inventory("invtry2.dat", ios::in | ios::out |
+		ios::binary);
+	Invtry record;
+	numFiles = 0;
+	if (!inventory)
+	{
+		cout << "Error opening file.";
+	}
+	while(!inventory.eof())
+	{
+		inventory.seekg(numFiles * sizeof(record), ios::beg);
+		inventory.read(reinterpret_cast<char *> (&record), sizeof(record));
+		numFiles++;
+		cout << sizeof(record) << " ";
+	}
+	inventory.close();
+	cout << numFiles;
+}
+
+void inventoryRecords::DisplayRecords()
+{
+	
+	fstream inventory("invtry2.dat", ios::in | ios::out |
+		ios::binary);
+	Invtry record;
+
+	if (!inventory)
+	{
+		cout << "Error opening file.";
+	}
+	for (int count = 0; count < numFiles; count++)
+	{
+		inventory.seekg(count * sizeof(record), ios::beg);
+		inventory.read(reinterpret_cast<char *> (&record), sizeof(record));
+
+		cout << "Description: " << record.desc << endl;
+		cout << "Quantity: " << record.qty << endl;
+		cout << "Price: " << record.price  << endl;
+		cout << endl;
+	}
+	inventory.close();
+}
+
+void inventoryRecords::ReadWrite()
+{
+	// Variables needed to read the file
+	Invtry record;
+	long recNum;
+
+	// Open the file
+	fstream inventory("invtry2.dat", ios::in | ios::out |
+		ios::binary);
+	if (!inventory)
+	{
+		cout << "Error opening file.";
+	}
+
+	// Move to the desired record and read it into record
+	cout << "Which record do you want to edit?";
+	cin >> recNum;
+	inventory.seekg(recNum * sizeof(record), ios::beg);
+	inventory.read(reinterpret_cast<char *> (&record), sizeof(record));
+
+	// Get new data from user and edit in-memory record						
+	cout << "Description: ";
+	cout << record.desc << endl;
+	cout << "Quantity: ";
+	cout << record.qty << endl;
+	cout << "Price: ";
+	cout << record.price << endl;
+	cout << "Enter the new data:\n";
+	cout << "Description: ";
+	cin.ignore();
+	cin.getline(record.desc, 31);
+	cout << "Quantity: ";
+	cin >> record.qty;
+	cout << "Price: ";
+	cin >> record.price;
+
+	// Move to the right place in file and write the record
+	inventory.seekp(recNum * sizeof(record), ios::beg);
+	inventory.write(reinterpret_cast<char *> (&record), sizeof(record));
+
+	// Close the file
+	inventory.close();
+}
+
+void inventoryRecords::TotalValue()
+{
+	fstream inventory("invtry2.dat", ios::in | ios::out |
+		ios::binary);
+	Invtry record;
+	double totalValue = 0.0;
+	if (!inventory)
+	{
+		cout << "Error opening file.";
+	}
+	for (int count = 0; count < numFiles; count++)
+	{
+		inventory.seekg(count * sizeof(record), ios::beg);
+		inventory.read(reinterpret_cast<char *> (&record), sizeof(record));
+
+		totalValue = record.price + totalValue;
+	}
+	cout << "Your total value of inventory is: $" << endl;
+	inventory.close();
+}
+
+void inventoryRecords::NewRecord()
+{
+	fstream inventory("invtry2.dat", ios::out |
+		ios::binary);
+	Invtry record;
+	if (!inventory)
+	{
+		cout << "Error opening file.";
+	}
+	cout << "Enter in information on the new item" << endl;
+	cout << "Description: ";
+	cin.ignore();
+	cin.getline(record.desc, 31);
+	cout << "Quantity: ";
+	cin >> record.qty;
+	cout << "Price: ";
+	cin >> record.price;
+	inventory.seekp(numFiles * sizeof(record), ios::beg);
+	inventory.write(reinterpret_cast<char *> (&record), sizeof(record));
+	inventory.close();
+}
